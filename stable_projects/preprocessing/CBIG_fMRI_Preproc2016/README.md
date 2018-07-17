@@ -32,7 +32,7 @@ We also provide multiple types of quality control (QC) figures for data inspecti
 ### Download stand-alone repository
 
 Since the whole GitHub repository is too big, we provide a stand-alone version of only this project and its dependencies. To download this stand-alone repository, visit this link:
-[https://github.com/ThomasYeoLab/Standalone_CBIG_fMRI_Preproc2016/releases/tag/v0.6.2-CBIG_fMRI_Preprocessing](https://github.com/ThomasYeoLab/Standalone_CBIG_fMRI_Preproc2016/releases/tag/v0.6.2-CBIG_fMRI_Preprocessing)
+[https://github.com/ThomasYeoLab/Standalone_CBIG_fMRI_Preproc2016](https://github.com/ThomasYeoLab/Standalone_CBIG_fMRI_Preproc2016)
 
 
 ### Download whole repository
