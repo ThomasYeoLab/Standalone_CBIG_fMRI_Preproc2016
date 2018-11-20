@@ -232,6 +232,7 @@ if ( $Pearson_r == 1 ) then
 		echo "[FC metrics]: The output file $output_dir/${output_prefix}_all2all.mat already exists. Skip ..." |& tee -a $LF
 	else
 		set cmd = ( $MATLAB -nodesktop -nodisplay -nosplash -r '"' 'addpath(genpath('"'"${root_dir}'/utilities'"'"'))'; )
+		set cmd = ($cmd 'addpath(genpath('"'"${CBIG_CODE_DIR}'/utilities/matlab'"'"'))'; )
 		set cmd = ($cmd CBIG_preproc_FCmetrics "'"$lh_cortical_ROIs_file"'" "'"$rh_cortical_ROIs_file"'" )
 		set cmd = ($cmd "'"$subcortex_func_vol"'" "'"$lh_surf_data_list"'" "'"$rh_surf_data_list"'" "'"$vol_data_list"'")
 		set cmd = ($cmd  "'"$discard_frames_list"'" "'"Pearson_r"'" "'"$output_dir"'" "'"$output_prefix"'"; exit; '"' );

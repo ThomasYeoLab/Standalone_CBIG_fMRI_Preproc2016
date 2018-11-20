@@ -27,7 +27,7 @@ fd = csvread(FDRMS_file);
 dvars = csvread(DVARS_file);
 
 %% Compute the correlation, discard the first frame
-coe = CBIG_corr(fd(2:end), dvars(2:end));
+coe = CBIG_preproc_corr_matrix(fd(2:end), dvars(2:end));
 
 %% Plot and save the figure
 figure;
