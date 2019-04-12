@@ -1,6 +1,6 @@
 References
 ==========
-+ Schaefer A, Kong R, Gordon EM, Laumann TO, Zuo XN, Holmes AJ, Eickhoff SB, Yeo BT, [**Local-Global Parcellation of the Human Cerebral Cortex From Intrinsic Functional Connectivity MRI**](https://doi.org/10.1101/135632), *Cerebral Cortex*, 2017
++ Schaefer A, Kong R, Gordon EM, Laumann TO, Zuo XN, Holmes AJ, Eickhoff SB, Yeo BTT. [**Local-Global parcellation of the human cerebral cortex from intrinsic functional connectivity MRI**](http://people.csail.mit.edu/ythomas/publications/2018LocalGlobal-CerebCor.pdf), *Cerebral Cortex*, 29:3095-3114, 2018
 
 ----
 
@@ -25,6 +25,9 @@ Here we provide a visualization of the 400 parcel parcellation in ```fslr32k``` 
 
 <img src="readme_figures/Schaefer2018_400parcel_parcellation_match_Yeo_17_network_fslr32k.png" height="300" />
 
+
+We also provide RAS centroid coordinates of the parcellations in MNI 1mm and 2mm space. If you are interested, please check the csv files in: `Parcellations/MNI/Centroid_coordinates`
+
 ---
 
 Code Release
@@ -35,22 +38,27 @@ The code utilized in this study is under `Code` folder. Specifically, the `Code`
 
 * **lib** folder -- This folder contains all other functions that will be called by the wrapper function.
 
-* **examples** folder -- In this folder we provide example code for you to run and example results for you to compare. Please refer to `/Code/examples/README.md` for more information.
-
 * **README.md** -- You can check this file to find out more about our clustering code.
 
+### Examples
+We provide example code for you run as well as example results for you to compare under `examples` folder. Please refer to `examples/README.md` for more information.
 
+### Download stand-alone repository
+Since the whole Github repository is too big, we provide a stand-alone version of only this project and its dependencies. To download this stand-alone repository, visit this link: [https://github.com/ThomasYeoLab/Standalone_Schaefer2018_LocalGlobal](https://github.com/ThomasYeoLab/Standalone_Schaefer2018_LocalGlobal)
+
+### Download whole repository
+Except for this project, if you want to use the code for other stable projects from out lab as well, you need to download the whole repository.
 
 To download the version of the code that is last tested, you can either
 
-- visit this link: [https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.4.12-Brain_Parcellations](https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.4.12-Brain_Parcellations)
+- visit this link: [https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.8.1-Schaefer2018_LocalGlobal](https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.8.1-Schaefer2018_LocalGlobal)
 
 or
 
 - run the following command, if you have Git installed
 
 ```
-git checkout -b Schaefer2018_LocalGlobal v0.4.12-Brain_Parcellations
+git checkout -b Schaefer2018_LocalGlobal v0.8.1-Schaefer2018_LocalGlobal
 ```
 
 ---
@@ -73,6 +81,26 @@ Updates
     2. The example subjects are re-processed by a newer version of our preprocessing pipeline ([v0.4.9](https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.4.9-CBIG_fMRI_Preprocessing)). Hence results in `./Code/examples` are updated.
     
     3. Update some README.md files.
+
+- Release v0.6.3 (17/07/2018):
+
+    1. Release Schaefer2018 300 parcels and 500 parcels parcellation.
+
+    2. Add unit test scripts to `unit_tests` folder.
+
+    3. Update README.md, add links for people to directly download the Parcellations and this project's standalone repository: `Standalone_Schaefer2018_LocalGlobal`.
+
+- Release v0.6.5 (17/08/2018):
+
+    1. Move `examples` folder from `$CBIG_CODE_DIR/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Code/examples` to `$CBIG_CODE_DIR/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/examples`.
+
+    2. Update publication details in README files.
+
+    3. Fix a bug related to creating `Standalone_Schaefer2018_LocalGlobal`.
+
+- Release v0.8.1 (01/02/2019):
+
+    1. Release RAS centroid coordinates of Schaefer2018 parcellations in MNI 1mm and 2mm space. The coordinate csv files can be found under `Parcellations/MNI/Centroid_coordinates`.
 
 ---
 

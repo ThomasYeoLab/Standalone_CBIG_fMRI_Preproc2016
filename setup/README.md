@@ -1,4 +1,16 @@
-Please read the following instructions **carefully** in order to have your local environment compatible with CBIG repository.
+Please read the following instructions **carefully** in order to have your local environment compatible with CBIG repository. 
+
+# 0) Prerequisites
+Linux system needs to be installed.
+The Linux distribution needs to be supported by the software used by this repository, which are
+[FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall),
+[FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation),
+[SPM](https://www.fil.ion.ucl.ac.uk/spm/),
+[AFNI](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/background_install/install_instructs/index.html),
+[ANTs](http://stnava.github.io/ANTs/),
+[Connectome Workbench](https://www.humanconnectome.org/software/connectome-workbench),
+[Caret](http://brainvis.wustl.edu/wiki/index.php/Caret:About), and Matlab.
+Linux distribution choices include but are not limited to RedHat, SuSE, Ubuntu and their derivatives.
 
 # 1) Copy and modify configuration file
 `CBIG` repository uses many external softwares. In order to easily use and manage these softwares, we use a script to configure the necessary paths and variables.
@@ -48,17 +60,6 @@ source ~/setup/CBIG_FS5.3_config.csh
 
 **[IMPORTANT]** If you use CBIG Python setup, this line must be the last line in your `.bashrc` or `.cshrc`
 
-### Check if your configuration works
-- If you are still in BASH or C-SHELL from the previous step, exit.
-- Open a new BASH or C-SHELL.
-- If you have `FreeSurfer` path configured properly, you should see a few lines from FreeSurfer when your command-line interface is booting up. One of those lines is:
-```Setting up environment for FreeSurfer/FS-FAST (and FSL)```
-- If you do
-```
-cd $CBIG_CODE_DIR
-```
-You should be in the directory of CBIG repository.
-
 # 2) Set `MATLABPATH` and `startup.m` 
 `MATLABPATH` is a variable containing paths that Matlab will search (when it is launched) to locate files being used by Matlab. 
 
@@ -89,5 +90,31 @@ If you want to use some packages written by people outside our lab, you can foll
 1. Check whether it exists in `external_packages/matlab/default_packages`
 If it exists, then you can just use it.
 2. Check whether it exists in `external_packages/matlab/non_default_packges`
-If it exists, you can use the package by `addpath` of this package in your function, but remember to `rmpath` of this package at the bottom of your function. For the format, see [License-and-Comment-Convention](https://github.com/YeoPrivateLab/CBIG_private/wiki/License-and-Comment-Convention).
+If it exists, you can use the package by `addpath` of this package in your function, but remember to `rmpath` of this package at the bottom of your function. For the format, see [Convention](https://github.com/YeoPrivateLab/CBIG_private/wiki/Convention).
 3. If the package doesn't exist, you can discuss with the admin [minh, ruby, jingwei, nanbo] and make a pull request to add this package into our CBIG repo. See [Level 2 User](https://github.com/YeoPrivateLab/CBIG_private/wiki/Level-2-User:--Contribute-to-CBIG_private-repository) about how to make a pull request. 
+
+# 3) Check if your configuration works
+### a) Check FreeSurfer and FSL
+- If you are still in BASH or C-SHELL from the previous step, exit.
+- Open a new BASH or C-SHELL.
+- If you have `FreeSurfer` path configured properly, you should see a few lines from FreeSurfer when your command-line interface is booting up. One of those lines is:
+```Setting up environment for FreeSurfer/FS-FAST (and FSL)```
+- Use `freeview` and `fslview` to load MNI template
+
+```bash
+freeview $CBIG_CODE_DIR/data/templates/volume/FSL_MNI152_FS4.5.0/mri/norm.nii.gz
+fslview $CBIG_CODE_DIR/data/templates/volume/FSL_MNI152_FS4.5.0/mri/norm.nii.gz
+```
+
+### b) Check Matlab functions
+- Open Matlab
+- Read a sample volume in MNI space, convert it to fsaverage space and visualize it
+
+```matlab
+CBIG_CODE_DIR = getenv('CBIG_CODE_DIR');
+x = MRIread([CBIG_CODE_DIR '/utilities/matlab/figure_utilities/draw_surface_data_as_annotation/sample/sample_vol.nii.gz']);
+[lh_data, rh_data] = CBIG_ProjectMNI2fsaverage_Ants(x, 'fsaverage');
+CBIG_DrawSurfaceMaps(lh_data, rh_data, 'fsaverage', 'inflated', 1e-5, 5e-5);
+```
+- You should get similar pattern as  
+`$CBIG_CODE_DIR/utilities/matlab/figure_utilities/draw_surface_data_as_annotation/sample/fsaverage_visualization.png`
