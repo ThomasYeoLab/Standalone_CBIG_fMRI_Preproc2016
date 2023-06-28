@@ -12,9 +12,9 @@ function CBIG_DrawSurfaceDataAsAnnotation(lh_data, rh_data, ...
 %
 % Input:
 %   Compulsory:
-%     - lh_data              : column vector containing surface data of
+%     - lh_data              : column or row vector containing surface data of
 %                              the left hemisphere.
-%     - rh_data              : column vector containing surface data of
+%     - rh_data              : column or row vector containing surface data of
 %                              the right hemisphere.
 %     - abs_path_to_lh_ref_annot: absolute path to the reference
 %                                 annotation file for the left hemisphere.
@@ -73,6 +73,9 @@ function CBIG_DrawSurfaceDataAsAnnotation(lh_data, rh_data, ...
 %
 % Written by Gia H. Ngo and CBIG under MIT license: https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
 
+% This function does not need vector check because the function itself
+% contains checking statement.
+
     if nargin < 12
         max_thresh = 1;
     else
@@ -106,6 +109,8 @@ function CBIG_DrawSurfaceDataAsAnnotation(lh_data, rh_data, ...
             colorscale = CBIG_GenerateHSVColorscale(discretization_res, min_thresh, max_thresh, abs_path_to_output_dir);
         elseif strcmp(colorscheme, 'parula')
             colorscale = CBIG_GenerateParulaColorscale(discretization_res, min_thresh, max_thresh, abs_path_to_output_dir);
+        elseif strcmp(colorscheme, 'jet')
+            colorscale = CBIG_GenerateJetColorscale(discretization_res, min_thresh, max_thresh, abs_path_to_output_dir);
         elseif strcmp(colorscheme, 'clear_brain') || strcmp(colorscheme, 'default')
             colorscale = CBIG_GenerateClearbrainColorscale(discretization_res, min_thresh, max_thresh, abs_path_to_output_dir);
         end

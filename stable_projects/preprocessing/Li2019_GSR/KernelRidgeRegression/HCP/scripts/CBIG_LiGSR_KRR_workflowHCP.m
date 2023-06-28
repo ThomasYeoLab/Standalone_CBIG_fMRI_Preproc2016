@@ -1,6 +1,6 @@
 function CBIG_LiGSR_KRR_workflowHCP( restricted_csv, unrestricted_csv, subject_list, RSFC_file, ...
     y_list, covariate_list, FD_file, DVARS_file, outdir, outstem, num_test_folds, num_inner_folds, ...
-    seed, ker_param_file, lambda_set_file, threshold_set_file )
+    seed, with_bias, ker_param_file, lambda_set_file, threshold_set_file )
 
 % CBIG_LiGSR_KRR_workflowHCP( restricted_csv, unrestricted_csv, subject_list, RSFC_file, ...
 %     y_list, covariate_list, outdir, outstem, num_test_folds, num_inner_folds, seed, ...
@@ -94,6 +94,15 @@ function CBIG_LiGSR_KRR_workflowHCP( restricted_csv, unrestricted_csv, subject_l
 %   - seed
 %     A string or scalar, the random seed used to split the data into
 %     training-test cross-validation folds.
+%
+%   - with_bias (optional)
+%     A scalar (choose from 0 or 1).
+%     - with_bias = 0 means the algorithm is to minimize 
+%     (y - K*alpha)^2 + (regularization of alpha);
+%     - with_bias = 1 means the algorithm is to minimize
+%     (y - K*alpha - beta)^2 + (regularization of alpha), where beta is a
+%     constant bias for every subject, estimated from the data.
+%     If not passed in, the default is 0, meaning there will be no bias term.
 % 
 %   - ker_param_file (optional)
 %     Full path of the kernel parameter file (.mat). A structure "ker_param" 
@@ -145,6 +154,10 @@ if(ischar(seed))
     seed = str2double(seed);
 end
 
+if(~exist('with_bias', 'var') || isempty(with_bias))
+    with_bias = 0;
+end
+
 if(~exist('ker_param_file', 'var') || isempty(ker_param_file) || ...
         strcmpi(ker_param_file, 'none'))
     ker_param_file = [];
@@ -152,7 +165,8 @@ end
 
 if(~exist('lambda_set_file', 'var') || isempty(lambda_set_file) || ...
         strcmpi(lambda_set_file, 'none'))
-    lambda_set_file = [];
+    lambda_set_file = fullfile(getenv('CBIG_CODE_DIR'), 'stable_projects', ...
+        'preprocessing', 'Li2019_GSR', 'KernelRidgeRegression', 'lambda_set.mat');
 end
 
 if(~exist('threshold_set_file', 'var') || isempty(threshold_set_file) || ...
@@ -213,8 +227,9 @@ sub_fold_file = fullfile(outdir, ['randseed_' num2str(seed)], ...
     ['no_relative_' num2str(num_test_folds) '_fold_sub_list.mat']);
 CBIG_KRR_workflow( '', 0, sub_fold_file, fullfile(outdir, ['y' ystem '.mat']), ...
     fullfile(outdir, ['covariates' cov_stem '.mat']), RSFC_file, num_inner_folds, ...
-    fullfile(outdir, ['randseed_' num2str(seed)]), outstem, ker_param_file, ...
-    lambda_set_file, threshold_set_file);
+    fullfile(outdir, ['randseed_' num2str(seed)]), outstem, 'with_bias', with_bias,...
+    'ker_param_file', ker_param_file, 'lambda_set_file',lambda_set_file,...
+    'threshold_set_file',threshold_set_file,'metric', 'corr');
 
 
 end

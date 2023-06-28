@@ -21,12 +21,13 @@ function []=CBIG_gwMRF_write_cifti_from_annot(lh_annot,rh_annot,output_name,npar
 %output is generated as files
 %
 %example
-%CBIG_gwMRF_write_cifti_from_annot(lh_annot,rh_annot,[base_folder,'HCP/fslr32k/cifti/Schaefer2018_',num2str(1000),'Parcels_',num2str(17) ,'Networks_order'],500,lh_fslr32k,rh_fslr32k)
+%CBIG_gwMRF_write_cifti_from_annot(lh_annot,rh_annot,output_name,500,lh_fslr32k,rh_fslr32k)
 
 % Written by Alexander Schaefer and CBIG under MIT license: https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
 
-
-load input/common_cifti
+CBIG_CODE_DIR = getenv('CBIG_CODE_DIR');
+load(fullfile(CBIG_CODE_DIR, 'stable_projects', 'brain_parcellation', ...
+    'Schaefer2018_LocalGlobal', 'Parcellations', 'Code', 'input', 'common_cifti.mat'));
 [a,lh,lh_s]=read_annotation(lh_annot);
 [a,rh,rh_s]=read_annotation(rh_annot);
 
@@ -51,6 +52,11 @@ fclose(fileID);
 
 system('rm -rf ~/temp123/')
 [lh_fslr,rh_fslr]=CBIG_project_fsaverage2fsLR(lh_new,rh_new,'fsaverage6','label','~/temp123/','20160827');
+% Exclude medial wall vertices defined by HCP
+lh_mesh_fslr_32k=CBIG_read_fslr_surface('lh','fs_LR_32k','inflated','medialwall.annot');
+rh_mesh_fslr_32k=CBIG_read_fslr_surface('rh','fs_LR_32k','inflated','medialwall.annot');
+lh_fslr(lh_mesh_fslr_32k.MARS_label == 1) = 0;
+rh_fslr(rh_mesh_fslr_32k.MARS_label == 1) = 0;
 
 %% to avoid that interpolation errors cause differences 
 lh_label_max_match=zeros(size(lh_fslr));
@@ -76,4 +82,5 @@ fslr.brainstructure=brainstructure;
 fslr.brainstructurelabel=brainstructurelabel';
 fslr.dimord='pos';
 ft_write_cifti(output_name,fslr,'parcellation','parcels','parameter','parcels');
-system(['wb_command -cifti-label-import ',output_name,'.dscalar.nii ',output_name,'_info.txt ',output_name,'.dlabel.nii'])
+system(['wb_command -cifti-label-import ',output_name,'.dscalar.nii ',output_name,'_info.txt ',...
+    output_name,'.dlabel.nii'])

@@ -1,6 +1,8 @@
-function CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1, output_file2, threshold, varargin_text1, varargin_text2, outlier_text, split_data)
+function CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1, output_file2,...
+    threshold, varargin_file1, varargin_file2, outlier_text, split_data)
 
-% CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1, output_file2, threshold, varargin_text1, varargin_text2, outlier_text)
+% CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1,...
+% output_file2, threshold, varargin_file1, varargin_file2, outlier_text)
 %
 % Compute surface correlation profiles of a single subject. The correlation
 % profile will be computed for each run and then averaged across runs.
@@ -13,18 +15,23 @@ function CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1, output_
 %       resolution of target regions, e.g. 'fsaverage5', 'fs_LR_32k'
 % 
 %     - output_file1
-%       left hemisphere output correlation profile for input in
-%       'fsaverage*' spaces,
-%       e.g. <path>/lh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.nii.gz;
-%       or entire cortical output correlation profile for input in 'fs_LR*'
-%       spaces,
+%       'fsaverage*' spaces:
+%       left hemisphere output correlation profile for input in 'fsaverage*' spaces, e.g.      
+%       <path>/lh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.nii.gz;
+%       <path>/lh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.mat;
+%
+%       'fs_LR*' spaces:
+%       entire cortical output correlation profile for input in 'fs_LR*' spaces, e.g.
 %       e.g. <path>/100206.roifs_LR_900.thres0.1.surf2surf_profile_scrub.mat.
 % 
 %     - output_file2  
-%       right hemisphere output correlation profile for input in
-%       'fsaverage*' spaces,
-%       e.g. <path>/rh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.nii.gz;
-%       not useful for input in 'fs_LR*' spaces (you can pass in 'NONE' or
+%       'fsaverage*' spaces:
+%       right hemisphere output correlation profile for input in 'fsaverage*' spaces, e.g.      
+%       <path>/rh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.nii.gz;
+%       <path>/rh.Sub0033_Ses1.roifsaverage3.thres0.1.surf2surf_profile_scrub.mat;
+%
+%       'fs_LR*' spaces:
+%       This input is not useful for input in 'fs_LR*' spaces (you can pass in 'NONE' or
 %       empty string).
 % 
 %     - threshold
@@ -32,35 +39,54 @@ function CBIG_ComputeCorrelationProfile(seed_mesh, target, output_file1, output_
 %       means indices with the highest 10% correlations will be set to 1,
 %       others will be set to 0.
 % 
-%     - varargin_text1
-%       the text file containing left hemisphere surface data list if input
-%       data are in 'fsaverage*' spaces,
+%     - varargin_file1
+%       'fsaverage*' spaces:
+%       the text file containing left hemisphere surface data list,
 %       e.g. <path>/lh.Sub0033_Ses1.input;
-%       or the text file containing entire cortical surface data list if
-%       input data are in 'fs_LR*' spaces,
+%       Each line in this file corresponds to a single run of this subject. 
+%       <varargin_file1> can also be a path which points to a single run if the input
+%       is fMRI data of a single run. 
+%       e.g. <path>/lh.Sub0033_Ses1.nii.gz.
+%
+%       'fs_LR*' spaces:
+%       the text file containing entire cortical surface data list,
 %       e.g. <path>/100206.dtseries_list.txt.
 %       Each line in this file corresponds to a single run of this subject.
+%       <varargin_file1> can also be a path which points to a single run if the input
+%       is fMRI data of a single run.
+%       e.g. <path>/Sub0033_Ses1.dtseries.nii.
 % 
-%     - varargin_text2
-%       the text file containing right hemisphere surface data list if
-%       input data are in 'fsaverage*' spaces,
-%       e.g. <path>/lh.Sub0033_Ses1.input;
-%       not useful for input in 'fs_LR*' spaces (you can pass in 'NONE' or
+%     - varargin_file2
+%       'fsaverage*' spaces:
+%       the text file containing right hemisphere surface data list,
+%       e.g. <path>/rh.Sub0033_Ses1.input;
+%       Each line in this file corresponds to a single run of this subject. 
+%       <varargin_file1> can also be a path which points to a single run if the input
+%       is fMRI data of a single run. 
+%       e.g. <path>/rh.Sub0033_Ses1.nii.gz.
+%
+%       'fs_LR*' spaces:
+%       This input is not useful for input in 'fs_LR*' spaces (you can pass in 'NONE' or
 %       empty string).
-%       Each line in this file corresponds to a single run of this subject.
-% 
+%
 %     - outlier_text
 %       the text file containing outlier file name, 
 %       e.g. <path>/outlier.Sub0033_Ses1.input
 %       Each line in this list corresponds to a single run of this subject.
-% 
+%        <outlier_text> can also be a path which points to the outlier file of a single run 
+%       if the input is fMRI data of a single run. 
+%       e.g. <path>/outlier_Sub0033_Ses1_run1.txt
+%       
 %     - split_data
-%       string ('0' / '1') or scalar (0 / 1).
-%       If this flag is 1, for subject with only one run, this function
-%       will split it into two fake runs with equal length. For subject
-%       with multiple runs, it will not split any run.
+%       string or scalar. It can be '0' or other non-zero integer value.
+%       If this flag is a non-zero value K, for subject with only one run, this function
+%       will split it into K fake runs with equal length. For subject with multiple runs, 
+%       it will not split any run.
 %       If this flag is 0, whether the input subject is with one run or
 %       multiple runs, this function will not split any run.
+%       If this flag is 1, for subject with only one run, this function
+%       will split it into 2 fake runs with equal length. For subject with multiple runs, 
+%       it will not split any run.
 %
 %
 % Written by CBIG under MIT license: https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
@@ -83,67 +109,84 @@ else
     error('Unknown ''seed_mesh''.')
 end
 
+% if there is only one single run, the input file is the path to the fmri data instead of a txt file
+if(contains(varargin_file1, '.nii') | contains(varargin_file1, '.mgh') | contains(varargin_file1, '.dtseries'))
+    varargin1{1} = varargin_file1;
+else
 
-% read in both left and right text files.
-fid = fopen(varargin_text1, 'r');
-i = 0;
-while(1);
-   tmp = fscanf(fid, '%s\n', 1);
-   if(isempty(tmp))
-       break
-   else
-       i = i + 1;
-       varargin1{i} = tmp;
-   end
+    % read in both left and right text files.
+    fid = fopen(varargin_file1, 'r');
+    i = 0;
+    while(1);
+    tmp = fscanf(fid, '%s\n', 1);
+    if(isempty(tmp))
+        break
+    else
+        i = i + 1;
+        varargin1{i} = tmp;
+    end
+    end
+    fclose(fid);
 end
-fclose(fid);
 
 % read in both left and right text files.
 % it is only applicable for data in fsaverage* spaces because for fs_LR
 % space, left and right hemispheres are in the same file
 if(~isempty(strfind(target, 'fsaverage')))
-    fid = fopen(varargin_text2, 'r');
-    i = 0;
-    while(1);
-        tmp = fscanf(fid, '%s\n', 1);
-        if(isempty(tmp))
-            break
-        else
-            i = i + 1;
-            varargin2{i} = tmp;
+    if(contains(varargin_file2, '.nii') | contains(varargin_file2, '.mgh'))
+        varargin2{1} = varargin_file2;
+    else
+        fid = fopen(varargin_file2, 'r');
+        i = 0;
+        while(1);
+            tmp = fscanf(fid, '%s\n', 1);
+            if(isempty(tmp))
+                break
+            else
+                i = i + 1;
+                varargin2{i} = tmp;
+            end
         end
+        fclose(fid);
     end
-    fclose(fid);
 end
 
 % read in outlier text files
-if(exist('outlier_text', 'var') && ~strcmp(outlier_text, 'NONE') && ~isempty(outlier_text))
-    fid = fopen(outlier_text, 'r');
-    i = 0;
-    while(1);
-        tmp = fscanf(fid, '%s\n', 1);
-        if(isempty(tmp))
-            break
-        else
-            i = i + 1;
-            outlierin{i} = tmp;
+if(contains(varargin_file1, '.nii') | contains(varargin_file1, '.mgh') | contains(varargin_file1, '.dtseries'))
+    outlierin{1} = outlier_text;
+else
+    if(exist('outlier_text', 'var') && ~strcmp(outlier_text, 'NONE') && ~isempty(outlier_text))
+        fid = fopen(outlier_text, 'r');
+        i = 0;
+        while(1);
+            tmp = fscanf(fid, '%s\n', 1);
+            if(isempty(tmp))
+                break
+            else
+                i = i + 1;
+                outlierin{i} = tmp;
+            end
         end
+        fclose(fid);
     end
-    fclose(fid);
 end
-
 if(~exist('split_data', 'var'))
     split_data = 0;
 else
     if(ischar(split_data))
         split_data = str2num(split_data);
     end
+    if(split_data == 1)
+        fprintf('Split flag is set to be 1, will split data into 2 fake runs. \n');
+        split_data = 2;
+    end
 end
 
 % Compute profile for left hemi
 for i = 1:length(varargin1)
     if(exist('outlierin', 'var'))
-        outliers = dlmread(outlierin{i});                                   % {0,1} vector, where uncensored time points are 0
+        % {0,1} vector, where uncensored time points are 0
+        outliers = dlmread(outlierin{i}); 
     end
     
     input = varargin1{i};
@@ -177,16 +220,32 @@ for i = 1:length(varargin1)
     end
     
     % normalize series (note that series are now of dimensions: T x N) and compute correlation
-    if(split_data==1 && length(varargin1)==1)
-        s_series_1 = s_series(1:floor(size(s_series,1)/2), :);
-        s_series_2 = s_series(floor(size(s_series,1)/2)+1:end, :);
-        t_series_1 = t_series(1:floor(size(t_series,1)/2), :);
-        t_series_2 = t_series(floor(size(t_series,1)/2)+1:end, :);
-        
-        corr_mat1(:,:,1) = CBIG_corr(s_series_1, t_series_1);
-        corr_mat1(:,:,2) = CBIG_corr(s_series_2, t_series_2);
+    if(split_data~=0 && length(varargin1)==1)
+        for split = 1:split_data
+            rang_start = floor(size(s_series,1)/split_data) * (split - 1) + 1;
+            rang_end = floor(size(s_series,1)/split_data) * split;
+            if(split == split_data)
+                rang_end = size(s_series,1);
+            end
+            curr_s_series = s_series(rang_start:rang_end,:);
+            curr_t_series = t_series(rang_start:rang_end,:);
+            curr_corr_mat1 = CBIG_corr(curr_s_series, curr_t_series);
+
+            disp(['Fake run ' num2str(split) ', isnan: ' num2str(sum(sum(isnan(curr_corr_mat1)))) ' out of '...
+            num2str(numel(curr_corr_mat1))]);
+            tmp_corr = curr_corr_mat1;
+            tmp_corr(isnan(curr_corr_mat1)) = 0;
+            corr_mat1(:,:,split) = tmp_corr;
+        end
+        if(i == 1)
+            output = corr_mat1;
+        else
+            output = output + corr_mat1;
+        end
     else        
         corr_mat1 = CBIG_corr(s_series, t_series);
+        disp(['isnan: ' num2str(sum(isnan(corr_mat1(:)))) ' out of ' num2str(numel(corr_mat1))]);
+        corr_mat1(isnan(corr_mat1)) = 0;
         if(i == 1)
             output = corr_mat1;
         else
@@ -195,25 +254,18 @@ for i = 1:length(varargin1)
     end
     clear outliers
 end
-if(split_data==1 && length(varargin1)==1)
-    for run = 1:2
-        disp(['Fake run ' num2str(run) ', isnan: ' num2str(sum(sum(isnan(corr_mat1(:,:,run))))) ' out of ' num2str(numel(corr_mat1(:,:,run)))]);
-        tmp_corr = corr_mat1(:, :, run);
-        tmp_corr(isnan(corr_mat1(:,:,run))) = 0;
-        corr_mat1(:, :, run) = tmp_corr;
-    end
-else
-    output = output / length(varargin1);
-    corr_mat1 = output;
-    disp(['isnan: ' num2str(sum(isnan(corr_mat1(:)))) ' out of ' num2str(numel(corr_mat1))]);
-    corr_mat1(isnan(corr_mat1)) = 0;
-end
+
+output = output / length(varargin1);
+corr_mat1 = output;
+
 
 % Compute profile for right hemi
-if(~isempty(strfind(target, 'fsaverage')))                                      % if input data is in fs_LR space, this part is not needed.
+if(~isempty(strfind(target, 'fsaverage'))) 
+    % if input data is in fs_LR space, this part is not needed.
     for i = 1:length(varargin2)
         if(exist('outlierin', 'var'))
-            outliers = dlmread(outlierin{i});                                   % {0,1} vector, where uncensored time points are 0
+            % {0,1} vector, where uncensored time points are 0
+            outliers = dlmread(outlierin{i});        
         end
         
         input = varargin2{i};
@@ -240,16 +292,32 @@ if(~isempty(strfind(target, 'fsaverage')))                                      
         s_series = [lh_seed_series rh_seed_series];
         
         % normalize series (note that series are now of dimensions: T x N) and compute correlation
-        if(split_data==1 && length(varargin2)==1)
-            s_series_1 = s_series(1:floor(size(s_series,1)/2), :);
-            s_series_2 = s_series(floor(size(s_series,1)/2)+1:end, :);
-            t_series_1 = t_series(1:floor(size(t_series,1)/2), :);
-            t_series_2 = t_series(floor(size(t_series,1)/2)+1:end, :);
-            
-            corr_mat2(:,:,1) = CBIG_corr(s_series_1, t_series_1);
-            corr_mat2(:,:,2) = CBIG_corr(s_series_2, t_series_2);
-        else
+        if(split_data~=0 && length(varargin1)==1)
+            for split = 1:split_data
+                rang_start = floor(size(s_series,1)/split_data) * (split - 1) + 1;
+                rang_end = floor(size(s_series,1)/split_data) * split;
+                if(split == split_data)
+                    rang_end = size(s_series,1);
+                end
+                curr_s_series = s_series(rang_start:rang_end,:);
+                curr_t_series = t_series(rang_start:rang_end,:);
+                curr_corr_mat2 = CBIG_corr(curr_s_series, curr_t_series);
+    
+                disp(['Fake run ' num2str(split) ', isnan: ' num2str(sum(sum(isnan(curr_corr_mat2)))) ' out of '...
+                num2str(numel(curr_corr_mat2))]);
+                tmp_corr = curr_corr_mat2;
+                tmp_corr(isnan(curr_corr_mat2)) = 0;
+                corr_mat2(:,:,split) = tmp_corr;
+            end
+            if(i == 1)
+                output = corr_mat2;
+            else
+                output = output + corr_mat2;
+            end
+        else        
             corr_mat2 = CBIG_corr(s_series, t_series);
+            disp(['isnan: ' num2str(sum(isnan(corr_mat2(:)))) ' out of ' num2str(numel(corr_mat2))]);
+            corr_mat2(isnan(corr_mat2)) = 0;
             if(i == 1)
                 output = corr_mat2;
             else
@@ -258,24 +326,14 @@ if(~isempty(strfind(target, 'fsaverage')))                                      
         end
         clear outliers
     end
-    if(split_data==1 && length(varargin2)==1)
-        for run = 1:2
-            disp(['Fake run ' num2str(run) ', isnan: ' num2str(sum(sum(isnan(corr_mat2(:,:,run))))) ' out of ' num2str(numel(corr_mat2(:,:,run)))]);
-            tmp_corr = corr_mat2(:, :, run);
-            tmp_corr(isnan(corr_mat2(:,:,run))) = 0;
-            corr_mat2(:, :, run) = tmp_corr;
-        end
-    else
-        output = output / length(varargin2);
-        corr_mat2 = output;
-        disp(['isnan: ' num2str(sum(isnan(corr_mat2(:)))) ' out of ' num2str(numel(corr_mat2))]);
-        corr_mat2(isnan(corr_mat2)) = 0;
-    end
+
+    output = output / length(varargin2);
+    corr_mat2 = output;
 end
 
 % combine both hemisphere and threshold
-if(split_data==1 && length(varargin1)==1)
-    for run = 1:2
+if(split_data~=0 && length(varargin1)==1)
+    for run = 1:split_data
         if(~isempty(strfind(target, 'fsaverage')))
             tmp = [corr_mat1(:,:,run) corr_mat2(:,:,run)];
         else
@@ -289,18 +347,21 @@ if(split_data==1 && length(varargin1)==1)
             tmp_corr(corr_mat1(:,:,run) < t) = 0;
             tmp_corr(corr_mat1(:,:,run) >= t) = 1;
             corr_mat1(:, :, run) = tmp_corr;
-            ind = [strfind(output_file1, '.nii.gz') strfind(output_file1, '.mat')];         % output_file1 either contains '.nii.gz' or '.dtseries.nii'
+            % output_file1 either contains '.nii.gz' or '.mat'
+            ind = [strfind(output_file1, '.nii.gz') strfind(output_file1, '.mat')];         
             output_file1_tmp = [output_file1(1:ind-1) '_' num2str(run) output_file1(ind:end)];
-            write_fmri(output_file1_tmp, input_series, corr_mat1(:,:,run)', [input_size(1:end-1) size(corr_mat1, 1)]);
+            write_fmri(output_file1_tmp, input_series, corr_mat1(:,:,run)',...
+             [input_size(1:end-1) size(corr_mat1, 1)]);
             
             if(~isempty(strfind(target, 'fsaverage')))
                 tmp_corr = corr_mat2(:, :, run);
                 tmp_corr(corr_mat2(:,:,run) < t) = 0;
                 tmp_corr(corr_mat2(:,:,run) >= t) = 1;
                 corr_mat2(:, :, run) = tmp_corr;
-                ind = strfind(output_file2, '.nii.gz');                               % output_file2 can only contains '.nii.gz'
+                ind = [strfind(output_file2, '.nii.gz') strfind(output_file2, '.mat')];                                 
                 output_file2_tmp = [output_file2(1:ind-1), '_' num2str(run) output_file2(ind:end)];
-                write_fmri(output_file2_tmp, input_series, corr_mat2(:,:,run)', [input_size(1:end-1) size(corr_mat2, 1)]);
+                write_fmri(output_file2_tmp, input_series, corr_mat2(:,:,run)',...
+                 [input_size(1:end-1) size(corr_mat2, 1)]);
             end
         end
     end
@@ -358,7 +419,7 @@ if (isempty(strfind(fmri_name, '.dtseries.nii')))
     vol = fmri.vol;
     vol_size = size(vol);
     if(length(vol_size) < 4)
-        vol = reshape(vol, prod(vol_size(1:3)), 1);
+        vol = reshape(vol, prod(vol_size(1:length(vol_size)-1)), vol_size(length(vol_size)));
     else
         vol = reshape(vol, prod(vol_size(1:3)), vol_size(4));
     end

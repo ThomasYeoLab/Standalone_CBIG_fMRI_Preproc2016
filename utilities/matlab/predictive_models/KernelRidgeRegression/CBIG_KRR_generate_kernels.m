@@ -1,6 +1,6 @@
-function CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, similarity_mat )
+function CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, similarity_mat, cov_X )
 
-% CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, similarity_mat )
+% CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, similarity_mat, cov_X )
 % 
 % This function calculates the inner-loop and training-test kernels for
 % kernel ridge regression. 
@@ -62,6 +62,12 @@ function CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, si
 %     split this similarity matrix into kernels for different folds without
 %     further operations. By passing in this argument, "feature_mat" is not
 %     needed (you can pass in an empty matrix for the "feature_mat" input).
+%
+%   - cov_X (optional)
+%     A #subjects x #covariates matrix, the covariates to be regressed from 
+%     the features. The regression coefficients will be estimated from only
+%     training set. The estimated coefficients then will be applied to the
+%     test set.
 % 
 % Outputs:
 %     Case 1. (cross-validation)
@@ -86,7 +92,7 @@ function CBIG_KRR_generate_kernels( feature_mat, sub_fold, outdir, ker_param, si
 %     folder for the test phase. (Training subjects at first, then followed
 %     by test subjects.)
 % 
-% Written by Jingwei Li, Ru(by) Kong and CBIG under MIT license: https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
+% Written by Jingwei, Ru(by) and CBIG under MIT license: https://github.com/ThomasYeoLab/CBIG/blob/master/LICENSE.md
 
 % If feature_mat is a connectivity matrix, extract the lower triangular
 % entries and construct feature_mat as a #features x #subjects matrix.
@@ -116,11 +122,27 @@ if(num_test_folds == 1)
     train_ind = sub_fold.fold_index == 0;
     test_ind = sub_fold.fold_index == 1;
     valid_ind = sub_fold.fold_index == 2;
+
+    % regress covariates from features (if necessary)
+    curr_outdir = fullfile(outdir, 'FSM_innerloop');
+    if(~exist(curr_outdir, 'dir')); mkdir(curr_outdir); end
+    if(exist('cov_X', 'var') && ~isempty(cov_X))
+        fprintf('Regress covariates from features\n')
+        cov_X_train_mean = mean(cov_X(train_ind, :));
+        [feature_resid(train_ind, :), beta] = CBIG_regress_X_from_y_train(...
+            feature_mat(:, train_ind)', cov_X(train_ind, :));
+        feature_resid(valid_ind, :) = CBIG_regress_X_from_y_test(...
+            feature_mat(:, valid_ind)', cov_X(valid_ind, :), beta, cov_X_train_mean);
+        feature_resid(test_ind, :) = CBIG_regress_X_from_y_test(...
+            feature_mat(:, test_ind)', cov_X(test_ind, :), beta, cov_X_train_mean);
+
+        feature_mat = feature_resid';
+        clear feature_resid
+        save(fullfile(outdir, 'FSM_innerloop', 'beta.mat'), 'beta')
+    end
     
     % training & validation
     fprintf('Training & validation FSM\n')
-    curr_outdir = fullfile(outdir, 'FSM_innerloop');
-    if(~exist(curr_outdir, 'dir')); mkdir(curr_outdir); end
     for k = 1:num_ker
         fprintf('-- Current kernel type is %s, scale %f\n', ker_param(k).type, ker_param(k).scale);
         curr_outname = fullfile(curr_outdir, ['FSM_' ker_param(k).type outstem{k} '.mat']);
@@ -129,7 +151,7 @@ if(num_test_folds == 1)
                 FSM = CBIG_crossvalid_kernel_with_scale(feature_mat(:, train_ind), feature_mat(:, valid_ind), ...
                     [], [], ker_param(k).type, ker_param(k).scale);
             else
-                FSM = similarity_mat(train_ind+valid_ind, train_ind+valid_ind);
+                FSM = similarity_mat(or(train_ind, valid_ind), or(train_ind, valid_ind));
                 % use "+" because training and validation sets are supposed
                 % to be exclusive.
             end
@@ -151,7 +173,7 @@ if(num_test_folds == 1)
                 FSM = CBIG_crossvalid_kernel_with_scale(feature_mat(:, train_ind), feature_mat(:, test_ind), ...
                     [], [], ker_param(k).type, ker_param(k).scale);
             else
-                FSM = similarity_mat(train_ind+test_ind, train_ind+test_ind);
+                FSM = similarity_mat(or(train_ind, test_ind), or(train_ind, test_ind));
                 % use "+" because training and test sets are supposed 
                 % to be exclusive.
             end
@@ -166,10 +188,24 @@ else
         train_ind = sub_fold(test_fold).fold_index == 0;
         test_ind = sub_fold(test_fold).fold_index == 1;
         
-        % inner-loop kernels
-        fprintf('Fold %d, inner-loop FSM\n', test_fold);
+        % Regress covariates from features
         curr_outdir = fullfile(outdir, 'FSM_innerloop', ['fold_' num2str(test_fold)]);
         if(~exist(curr_outdir, 'dir')); mkdir(curr_outdir); end
+        if(exist('cov_X', 'var') && ~isempty(cov_X))
+            fprintf('Fold %d, regress covariates from features\n', test_fold)
+            cov_X_train_mean = mean(cov_X(train_ind, :));
+            [feature_resid(train_ind, :), beta] = CBIG_regress_X_from_y_train(...
+                feature_mat(:, train_ind)', cov_X(train_ind, :));
+            feature_resid(test_ind, :) = CBIG_regress_X_from_y_test(...
+                feature_mat(:, test_ind)', cov_X(test_ind, :), beta, cov_X_train_mean);
+
+            feature_mat = feature_resid';
+            clear feature_resid
+            save(fullfile(curr_outdir, 'beta.mat'), 'beta')
+        end
+
+        % inner-loop kernels
+        fprintf('Fold %d, inner-loop FSM\n', test_fold);
         for k = 1:num_ker
             fprintf('-- Current kernel type is %s, scale %f\n', ker_param(k).type, ker_param(k).scale);
             curr_outname = fullfile(curr_outdir, ['FSM_' ker_param(k).type outstem{k} '.mat']);
@@ -198,7 +234,7 @@ else
                     FSM = CBIG_crossvalid_kernel_with_scale(feature_mat(:, train_ind), feature_mat(:, test_ind), ...
                         train_ind, test_ind, ker_param(k).type, ker_param(k).scale);
                 else
-                    train_test_ind = train_ind + test_ind;
+                    train_test_ind = or(train_ind, test_ind);
                     FSM = similarity_mat(train_test_ind, train_test_ind);
                 end
                 save(curr_outname, 'FSM'); clear FSM
