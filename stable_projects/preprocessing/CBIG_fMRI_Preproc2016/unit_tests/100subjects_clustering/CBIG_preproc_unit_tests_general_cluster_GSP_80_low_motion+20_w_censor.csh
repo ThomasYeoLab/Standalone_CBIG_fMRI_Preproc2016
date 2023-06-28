@@ -9,11 +9,11 @@ set subject_list = "$subject_list/100subjects_clustering/GSP_80_low_motion+20_w_
 # create fake dir for each subject in your data dir, and make symbolic links to original data dir
 set your_subject_dir = "${your_out_dir}/preproc_out"
 foreach s (`cat $subject_list`)
-	mkdir -p ${your_subject_dir}/$s
-	ln -s ${data_dir}/$s/surf ${your_subject_dir}/$s/
-	ln -s ${data_dir}/$s/logs ${your_subject_dir}/$s/
-	ln -s ${data_dir}/$s/qc ${your_subject_dir}/$s/
-	ln -s ${data_dir}/$s/bold ${your_subject_dir}/$s/
+    mkdir -p ${your_subject_dir}/$s
+    ln -s ${data_dir}/$s/surf ${your_subject_dir}/$s/
+    ln -s ${data_dir}/$s/logs ${your_subject_dir}/$s/
+    ln -s ${data_dir}/$s/qc ${your_subject_dir}/$s/
+    ln -s ${data_dir}/$s/bold ${your_subject_dir}/$s/
 end
 
 set out_dir = "${your_out_dir}/clustering"
@@ -26,34 +26,34 @@ set surf_stem = "_rest_skip4_stc_mc_residc_interp_FDRMS0.2_DVARS50_bp_0.009_0.08
 set outlier_stem = "_FDRMS0.2_DVARS50_motion_outliers"
 
 set curr_dir = `pwd`
-set username = `whoami`
-set work_dir = /data/users/$username/cluster/ 
+set work_dir = $HOME/cluster/ 
 
 echo $curr_dir
-echo $username
 echo $work_dir
 
 if (! -e $work_dir) then
-        mkdir -p $work_dir
+    mkdir -p $work_dir
 endif
 
 cd $work_dir
 
+set log_file = "${out_dir}/clust_100sub_ut.log"
 
 if( $scrub_flag == 1 ) then
-	set cmd = "cd ${curr_dir}; ${code_dir}/CBIG_Yeo2011_general_cluster_fcMRI_surf2surf_profiles.csh -sd"
-	set cmd = "$cmd ${your_subject_dir} -sub_ls ${subject_list} -surf_stem ${surf_stem} -n ${num_clusters} -out_dir"
-	set cmd = "$cmd ${out_dir} -cluster_out ${out_dir}/GSP_80_low_mt_20_w_censor_clusters${formated_cluster}_scrub"
-	set cmd = "$cmd -tries 1000 -outlier_stem ${outlier_stem}"
-	echo "$cmd" | qsub -V -q circ-spool -l walltime=20:00:00,mem=2GB
-
+    set cmd = "${code_dir}/CBIG_Yeo2011_general_cluster_fcMRI_surf2surf_profiles.csh -sd"
+    set cmd = "$cmd ${your_subject_dir} -sub_ls ${subject_list} -surf_stem ${surf_stem} -n ${num_clusters} -out_dir"
+    set cmd = "$cmd ${out_dir} -cluster_out ${out_dir}/GSP_80_low_mt_20_w_censor_clusters${formated_cluster}_scrub"
+    set cmd = "$cmd -tries 1000 -outlier_stem ${outlier_stem}"
 else
-	set cmd = "cd ${curr_dir}; ${code_dir}/CBIG_Yeo2011_general_cluster_fcMRI_surf2surf_profiles.csh -sd" 
-	set cmd = "$cmd ${your_subject_dir} -sub_ls ${subject_list} -surf_stem ${surf_stem} -n ${num_clusters} -out_dir"
-	set cmd = "$cmd ${out_dir} -cluster_out ${out_dir}/GSP_80_low_mt_20_w_censor_clusters${formated_cluster}_noscrub"
-	set cmd = "$cmd -tries 1000 "
-	echo "$cmd" | qsub -V -q circ-spool -l walltime=20:00:00,mem=2GB
+    set cmd = "${code_dir}/CBIG_Yeo2011_general_cluster_fcMRI_surf2surf_profiles.csh -sd" 
+    set cmd = "$cmd ${your_subject_dir} -sub_ls ${subject_list} -surf_stem ${surf_stem} -n ${num_clusters} -out_dir"
+    set cmd = "$cmd ${out_dir} -cluster_out \
+          ${out_dir}/GSP_80_low_mt_20_w_censor_clusters${formated_cluster}_noscrub"
+    set cmd = "$cmd -tries 1000 "
 endif
+
+set cmd = "$cmd | tee -a ${log_file}"
+$CBIG_CODE_DIR/setup/CBIG_pbsubmit -cmd "$cmd" -walltime 20:00:00 -mem 2G -name "clust_100sub_ut" 
 
 
 
