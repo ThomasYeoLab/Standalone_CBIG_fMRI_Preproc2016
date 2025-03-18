@@ -14,7 +14,8 @@ Resting state fMRI data from 1000 subjects were registered using surface-based a
 ----
 
 ## Parcellation Release
-The pacellations are released in `1000subjects_reference` folder. To use the parcellations without the trouble of downloading our entire repository, you can just click on this link: [download 1000subjects_reference](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Yeo2011_fcMRI_clustering/1000subjects_reference)
+
+The pacellations are released in `1000subjects_reference` folder. 
 
 Specifically, the parcellations include:
 
@@ -109,10 +110,10 @@ git checkout -b Yeo2011_fcMRI_clustering v0.19.2-Yeo2011_Schaefer2018
     
 - Release v0.4.5 (01/12/2017):
 
-	**Yeo2011_fcMRI_clustering**
-	
-	1. Add Yeo2011 parcellations with split labels.
-	
+    **Yeo2011_fcMRI_clustering**
+    
+    1. Add Yeo2011 parcellations with split labels.
+    
 - Release v0.4.3 (09/10/2017): Release Yeo2011 brain parcellation.
 
 ----

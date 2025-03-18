@@ -14,7 +14,7 @@ More details can be found in Schaefer et al. 2018.
 Parcellations Release
 =====================
 
-The parcellations are available at multiple resolution (100 parcels to 1000 parcels), and can be found under the ```Parcellations``` folder. To use the parcellations without the trouble of downloading our entire repository, you can just click on this link: [download Schaefer2018_Parcellations](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/ThomasYeoLab/CBIG/tree/master/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations)
+The parcellations are available at multiple resolution (100 parcels to 1000 parcels), and can be found under the ```Parcellations``` folder. 
 
 Specifically, there are three subfolders corresponding to three different spaces ```Freesurfer5.3```, ```MNI``` and ```HCP```. 
 
@@ -92,28 +92,27 @@ The code utilized in this study is under `Code` folder. Specifically, the `Code`
 ### Examples
 We provide example code for you run as well as example results for you to compare under `examples` folder. Please refer to `examples/README.md` for more information.
 
-### Download stand-alone repository
-Since the whole Github repository is too big, we provide a stand-alone version of only this project and its dependencies. To download this stand-alone repository, visit this link: [https://github.com/ThomasYeoLab/Standalone_Schaefer2018_LocalGlobal](https://github.com/ThomasYeoLab/Standalone_Schaefer2018_LocalGlobal)
-
 ### Download whole repository
 Except for this project, if you want to use the code for other stable projects from out lab as well, you need to download the whole repository.
 
 To download the version of the code that is last tested, you can either
 
-- visit this link: [https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.27.2-update_reorder_func](https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.27.2-update_reorder_func)
+- visit this link: [https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.33.1-Schaefer2018_add_centroids](https://github.com/ThomasYeoLab/CBIG/releases/tag/v0.33.1-Schaefer2018_add_centroids)
 
 or
 
 - run the following command, if you have Git installed
 
 ```
-git checkout -b update_reorder_func v0.27.2-update_reorder_func
+git checkout -b Schaefer2018_add_centroids v0.33.1-Schaefer2018_add_centroids
 ```
 
 ---
 
 Updates
 =======
+- Release v0.33.1 (21/2/2025): Add centroid coordinates for Kong2022 network order.
+
 - Release v0.27.2 (21/3/2023): Rename `CBIG_gwMRF_index_trans_btwn2versions.m` to `CBIG_ReorderParcelIndex.m` and move to `$CBIG_CODE_DIR/utilities/matlab/FC` folder.
 
 - Release v0.21.3 (17/1/2022)
@@ -176,7 +175,6 @@ Updates
 
     2. Update publication details in README files.
 
-    3. Fix a bug related to creating `Standalone_Schaefer2018_LocalGlobal`.
 
 - Release v0.6.3 (17/07/2018):
 
@@ -184,7 +182,7 @@ Updates
 
     2. Add unit test scripts to `unit_tests` folder.
 
-    3. Update README.md, add links for people to directly download the Parcellations and this project's standalone repository: `Standalone_Schaefer2018_LocalGlobal`.
+    3. Update README.md, add links for people to directly download the Parcellations.
 
 - Release v0.4.12 (09/04/2018): 
 

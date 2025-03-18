@@ -65,6 +65,7 @@ set low_f = ""; # default no filtering of respiratory pseudomotion
 set high_f = ""; # default no filtering of respiratory pseudomotion
 set echo_number = 1 # number of echos default to be 1
 set echo_stem = ""
+set matlab_runtime_util = "" # MATLAB Runtime utilities folder
 
 goto parse_args;
 parse_args_return:
@@ -78,13 +79,29 @@ set root_dir = `dirname $root_dir`
 ###############################
 # check if matlab exists
 ###############################
-set MATLAB=`which $CBIG_MATLAB_DIR/bin/matlab`
-if ($status) then
-    echo "ERROR: could not find matlab"
-    exit 1;
+if ( "$matlab_runtime_util" == "" ) then
+    set MATLAB=`which $CBIG_MATLAB_DIR/bin/matlab`
+    if ($status) then
+        echo "ERROR: could not find MATLAB"
+        exit 1;
+    endif
+else
+    set MATLAB=$MATLAB_RUNTIME_DIR
+    if ($status) then
+        echo "ERROR: could not find MATLAB Runtime"
+        exit 1;
+    endif
+    echo "Setting up environment variables for MATLAB Runtime"
+    setenv LD_LIBRARY_PATH ${MATLAB}/runtime/glnxa64:${MATLAB}/bin/glnxa64:${MATLAB}/sys/os/glnxa64:${MATLAB}/sys/opengl/lib/glnxa64:${LD_LIBRARY_PATH}
+    # check if MATLAB Runtime utilities folder exists
+    if ( ! -d $matlab_runtime_util ) then
+        echo "ERROR: MATLAB Runtime utilities folder does not exist!"
+        exit 1;
+    endif
 endif
 
 cd $sub_dir/$subject
+
 
 #############################################
 # BOLD Information
@@ -134,15 +151,15 @@ echo "=========Generate template.nii.gz..(n-th frame of the base_bold, default i
 pushd $base_bold
 set base_boldfile = $subject"_bld"$zpdbold[1]$echo_stem$BOLD_stem
 echo "[MC]: use $nframe +1 as the template" |& tee -a $LF
-if ( (! -e  $boldfolder/mc_template.nii.gz) || ($force == 1)) then
+if ( (! -e  $mc/mc_template.nii.gz) || ($force == 1)) then
     #Motion correction template is the nframe = $nframe, default is the first frame
-    fslroi $base_boldfile $boldfolder/mc_template $nframe 1 |& tee -a $LF 
+    fslroi $base_boldfile $mc/mc_template $nframe 1 |& tee -a $LF 
 else
     echo "[MC]: Template already exists!" |& tee -a $LF
 endif
 
 popd
-set template = $boldfolder/mc_template.nii.gz
+set template = $mc/mc_template.nii.gz
 echo "[MC]: template = $template" |& tee -a $LF
 echo "=======================Template generation done!=======================" |& tee -a $LF
 echo "" |& tee -a $LF
@@ -213,9 +230,14 @@ foreach curr_bold ($zpdbold)
     set mc_abs_rms_file = ${boldfile}_mc_abs.rms
     set mc_rel_rms_file = ${boldfile}_mc_rel.rms
     set outname_prefix = ${boldfile}_mc
-
-    set cmd = ( $MATLAB -nodesktop -nodisplay -nosplash -r '"' 'addpath(genpath('"'"${root_dir}'/utilities'"'"'))'; \
-CBIG_preproc_plot_mcflirt_par $mc_par_file $mc_abs_rms_file $mc_rel_rms_file $qc $outname_prefix; exit; '"' );
+    set matlab_args = "'$mc_par_file' '$mc_abs_rms_file' '$mc_rel_rms_file'"
+    set matlab_args = "${matlab_args} '$qc' '$outname_prefix'"
+    if ( "$matlab_runtime_util" == "" ) then
+        set cmd = ( $MATLAB -nodesktop -nodisplay -nosplash -r '"' 'addpath(genpath('"'"${root_dir}'/utilities'"'"'))'; )
+        set cmd = ( $cmd CBIG_preproc_plot_mcflirt_par $matlab_args; exit '"' )
+    else
+        set cmd = ( ${matlab_runtime_util}/CBIG_preproc_plot_mcflirt_par $matlab_args )
+    endif
     echo $cmd |& tee -a $LF
     eval $cmd |& tee -a $LF
 
@@ -273,10 +295,22 @@ foreach curr_bold ($zpdbold)
         set output = "$qc/${subject}_bld${curr_bold}"
         set dvars_file = "$mc/${boldfile}_motion_outliers_DVARS"
         set fd_file = "$mc/${boldfile}_motion_outliers_FDRMS"
-        set cmd = ( $MATLAB -nodesktop -nodisplay -nosplash -r '"' 'addpath(genpath('"'"${root_dir}'/utilities'"'"'))'; \
-            CBIG_preproc_DVARS_FDRMS_Correlation $dvars_file $fd_file $output; \
-            CBIG_preproc_motion_outliers $dvars_file $fd_file $fd_th $dv_th $discard_seg $output; exit; '"' );
-        eval $cmd |& tee -a $LF
+        set matlab_args_DVARS_FDRMS_Correlation = "'$dvars_file' '$fd_file' '$output'"
+        set matlab_args_motion_outliers = "'$dvars_file' '$fd_file' '$fd_th' '$dv_th' '$discard_seg' '$output'"
+        if ( "$matlab_runtime_util" == "" ) then
+            set cmd = ( $MATLAB -nodesktop -nodisplay -nosplash -r '"' 'addpath(genpath('"'"${root_dir}'/utilities'"'"'))'; \
+                CBIG_preproc_DVARS_FDRMS_Correlation $matlab_args_DVARS_FDRMS_Correlation; \
+                CBIG_preproc_motion_outliers $matlab_args_motion_outliers; exit; '"' );
+            eval $cmd |& tee -a $LF
+            echo $cmd |& tee -a $LF
+        else
+            set cmd = ( ${matlab_runtime_util}/CBIG_preproc_DVARS_FDRMS_Correlation $matlab_args_DVARS_FDRMS_Correlation )
+            eval $cmd |& tee -a $LF
+            echo $cmd |& tee -a $LF
+            set cmd = ( ${matlab_runtime_util}/CBIG_preproc_motion_outliers $matlab_args_motion_outliers )
+            eval $cmd |& tee -a $LF
+            echo $cmd |& tee -a $LF
+        endif
     else
         echo "[MC]: Motion outliers detection already created!" |& tee -a $LF
     endif
@@ -287,20 +321,6 @@ foreach curr_bold ($zpdbold)
 end
 
 echo "*********************************************************************" |& tee -a $LF
-
-#############################################
-# Clean up intermediate files
-#############################################
-if ( $nocleanup != 1 ) then
-    foreach curr_bold ($zpdbold)
-        pushd $curr_bold
-        set boldfile = $subject"_bld"$curr_bold$echo_stem$BOLD_stem
-        set mergefile = $boldfile"_merge.nii.gz"
-        rm $mergefile
-
-        popd
-    end
-endif
 
 ###############################################
 # check if the number of outliers exceeds 50% of total number of frames
@@ -325,7 +345,6 @@ if ($rm_run == 1) then
         if( `echo "$prop > $rm_run_th" | bc` ) then
             echo "Run $runfolder has more than $rm_run_th% outliers, remove this run from bold file." |& tee -a $LF
             sed -i -e "s/${runfolder}//g" ${bold_file}
-            set bold = `cat ${bold_file}`
         else
             echo "Run $runfolder has less than $rm_run_th% outliers, nothing change to this run." |& tee -a $LF
         endif
@@ -339,26 +358,72 @@ endif
 #########################
 echo "====================== apply transformation on other echos ======================" |& tee -a $LF
 cd $sub_dir/$subject/bold
-foreach curr_bold ($zpdbold)
+set bold = `cat ${bold_file}`
+foreach curr_bold ($bold)
     pushd $curr_bold
+    set xfm_dir="$subject"_bld"$curr_bold"_e1"$BOLD_stem"_mc.mat
     set i = 2
     while ( $i <= $echo_number)
-        set xfm_dir="$subject"_bld"$curr_bold"_e1"$BOLD_stem"_mc.mat
-        set cmd = (applyxfm4D "$subject"_bld"$curr_bold"_e$i"$BOLD_stem".nii.gz) 
-        set cmd = ( $cmd "$subject"_bld"$curr_bold"_e$i"$BOLD_stem".nii.gz)
-        set cmd = ( $cmd "$subject"_bld"$curr_bold"_e$i"$BOLD_stem"_mc.nii.gz ${xfm_dir} -fourdigit)
-        echo $cmd |& tee -a $LF
-        eval $cmd
+        set echo_stem = _e$i
+        set boldfile = $subject"_bld"$curr_bold$echo_stem$BOLD_stem
+        if ( (! -e  $boldfile"_mc.nii.gz") || ($force == 1) ) then
+            # Attach the template to the first frame. Which frame is attached does not affect the final result.
+            set cmd = "fslmerge -t ${boldfile}_merge ${template} ${boldfile}"
+            echo $cmd |& tee -a $LF
+            eval $cmd
+            set cmd = "applyxfm4D ${boldfile}_merge.nii.gz ${boldfile}_merge.nii.gz "
+            set cmd = "$cmd ${boldfile}_mc.nii.gz ${xfm_dir} -fourdigit"
+            echo $cmd |& tee -a $LF
+            eval $cmd
+            set numof_tps = `fslnvols ${boldfile}".nii.gz"` 
+            set cmd = "fslroi ${boldfile}_mc ${boldfile}_mc 1 ${numof_tps}"
+            echo $cmd |& tee -a $LF
+            eval $cmd
+        else
+            echo "[MC]: ${boldfile}_mc.nii.gz already exists!" |& tee -a $LF
+        endif
         @ i++
     end
     # remove MAT_0000 for spatial distortion correction
-    echo "=========remove MAT_0000 and generate transformation matrix========="
+    echo "=========remove MAT_0000 and generate transformation matrix=========" |& tee -a $LF
+    if ($echo_number != 1) then
+        set echo_stem = _e1
+    else
+        set echo_stem = ""
+    endif
     set boldfile = $subject"_bld"$curr_bold$echo_stem$BOLD_stem
     rm ${boldfile}_mc.mat/MAT_0000
     cat ${boldfile}_mc.mat/MAT* > ${boldfile}_mc.cat
     popd
 end
 echo "====================== apply transformation on other echos finished ======================" |& tee -a $LF
+
+#############################################
+# Clean up intermediate files
+#############################################
+if ( $nocleanup != 1 ) then
+    foreach curr_bold ($zpdbold) # remove merged intermediate file for single echo and multiecho e1
+        pushd $curr_bold
+        set boldfile = $subject"_bld"$curr_bold$echo_stem$BOLD_stem
+        set mergefile = $boldfile"_merge.nii.gz"
+        rm $mergefile
+        popd
+    end
+    if ($echo_number != 1) then # remove rest echos
+        foreach curr_bold ($bold)
+            pushd $curr_bold
+            set i = 2
+            while ( $i <= $echo_number)
+                set echo_stem = _e$i
+                set boldfile = $subject"_bld"$curr_bold$echo_stem$BOLD_stem
+                set mergefile = $boldfile"_merge.nii.gz"
+                rm $mergefile
+                @ i++
+            end
+            popd
+        end
+    endif
+endif
 
 #########################
 # Output last commit of current function 
@@ -474,6 +539,12 @@ while( $#argv != 0 )
             set echo_number = "$argv[1]"; shift;
             breaksw
 
+        #path to MATLAB Runtime utilities folder (optional)
+        case "-matlab_runtime_util":
+            if ( $#argv == 0 ) goto arg1err;
+            set matlab_runtime_util = $argv[1]; shift;
+            breaksw
+
         default:
             echo ERROR: Flag $flag unrecognized.
             echo $cmdline
@@ -573,6 +644,8 @@ OPTIONAL ARGUMENTS:
     -high_f                    : stop frequency of respiration. It can only be used together with low_f
     -echo_number <echo_number> : number of echoes. For single echo data, default set to be 1.
     -nocleanup                 : use this flag to keep all intermediate files
+    -matlab_runtime_util       : Full path of MATLAB Runtime utilities folder containing executable files.
+                                 If not empty, MATLAB Runtime will be used.
     -help                      : help
     -version                   : version
 

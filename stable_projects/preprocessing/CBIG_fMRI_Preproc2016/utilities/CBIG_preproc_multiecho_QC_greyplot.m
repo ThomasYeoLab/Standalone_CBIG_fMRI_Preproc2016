@@ -45,6 +45,7 @@ after_MEICA = reshape(after_MEICA,size(after_MEICA,1)*size(after_MEICA,2)*size(a
 GS = mean(before_MEICA, 1);
 FD = transpose(load(FDpath));
 
+fig = figure;
 subplot(3,1,1);
 xtick_vec = int16(linspace(1, length(FD), 6));
 plot(1:length(FD), FD, 'r', 'LineWidth', 2);
@@ -117,7 +118,7 @@ set(ay, 'TickDir', 'out');
 
 set(gcf, 'units', 'inch', 'position', [0 0 12 10]);
 set(gcf, 'color', 'w');
-Image = getframe(gcf);
-imwrite(Image.cdata, fullfile(output));
+print(fig, output, '-r300', '-dpng')
+close(fig)
 end
 
